@@ -186,24 +186,24 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors selection:bg-sky-500 selection:text-white">
       {/* Top Bar - Strict 3-zone contract */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-6">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
           {/* Zone 1: Wordmark */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => {
                 setSelectedProduct(null);
                 setActiveTab('list');
               }}
-              className="flex items-center gap-2.5 text-left group"
+              className="flex items-center gap-2 text-left group"
             >
-              <div className="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                <ShoppingBag className="w-5 h-5 stroke-[2]" />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2]" />
               </div>
               <div className="leading-tight">
-                <span className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
+                <span className="text-sm sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                   가격노트
                 </span>
-                <span className="hidden sm:inline-block ml-2 text-xs font-medium text-slate-400">
+                <span className="hidden md:inline-block ml-2 text-xs font-medium text-slate-400">
                   단위가격 & 최저가 추적
                 </span>
               </div>
@@ -211,41 +211,41 @@ export default function App() {
           </div>
 
           {/* Zone 2: Navigation Links / Segmented Switch */}
-          <nav className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+          <nav className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100 dark:bg-slate-800 rounded-lg sm:rounded-xl shrink-0">
             <button
               onClick={() => {
                 setActiveTab('list');
                 setSelectedProduct(null);
               }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+              className={`h-8 sm:h-8.5 px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-md sm:rounded-lg transition-colors whitespace-nowrap shrink-0 flex items-center justify-center ${
                 activeTab === 'list' && !selectedProduct
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              내 상품 목록
+              <span className="hidden sm:inline">내 </span>상품 목록
             </button>
             <button
               onClick={() => {
                 setActiveTab('calculator');
                 setSelectedProduct(null);
               }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 ${
+              className={`h-8 sm:h-8.5 px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-md sm:rounded-lg transition-colors whitespace-nowrap shrink-0 flex items-center justify-center gap-1 ${
                 activeTab === 'calculator'
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Calculator className="w-3.5 h-3.5" />
-              <span>즉석 비교기</span>
+              <Calculator className="w-3.5 h-3.5 shrink-0" />
+              <span>즉석 비교<span className="hidden sm:inline">기</span></span>
             </button>
           </nav>
 
           {/* Zone 3: Primary Action & Tools */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 rounded-lg sm:rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title={darkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
             >
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
