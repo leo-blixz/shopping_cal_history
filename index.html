@@ -1,23 +1,1134 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>가격노트 - 알뜰 장보기 단위가격 & 최저가 기록</title>
-    <meta name="description" content="식료품과 생필품의 용량별 단위가격(100g/100ml당)을 실시간 계산하고, 역대 최저가 및 구매처별 가격 변동을 추적·비교하는 스마트 장보기 노트" />
-    <meta property="og:title" content="가격노트 - 알뜰 장보기 단위가격 & 최저가 기록" />
-    <meta property="og:description" content="식료품과 생필품의 용량별 단위가격(100g/100ml당)을 실시간 계산하고, 역대 최저가 및 구매처별 가격 변동을 추적·비교하는 스마트 장보기 노트" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/png" href="/assets/aistudio/icon-192_fb1b2a60.png" />
-    <link rel="apple-touch-icon" href="/assets/aistudio/icon-192_fb1b2a60.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0284c7">
+  <meta name="description" content="식료품과 생필품의 단위가격(100g/100ml)을 실시간 계산하고, 역대 최저가와 즉석 비교를 제공하는 스마트 장보기 가격노트">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>가격노트 - 알뜰 장보기 단위가격 & 최저가 기록</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN for instant zero-build GitHub Pages deployment -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans KR"', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans KR', system-ui, sans-serif; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors">
 
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="showView('list')">
+        <div class="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs">
+          <svg class="w-5 h-5 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <div class="leading-tight">
+          <span class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">가격노트</span>
+          <span class="hidden sm:inline-block ml-2 text-xs font-medium text-slate-400">단위가격 & 최저가 추적</span>
+        </div>
+      </div>
+
+      <!-- Center Tabs -->
+      <nav class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+        <button id="tabList" onclick="showView('list')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs transition-colors">
+          내 상품 목록
+        </button>
+        <button id="tabCalc" onclick="showView('calc')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+          <span>즉석 비교기</span>
+        </button>
+      </nav>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="btnTheme" onclick="toggleTheme()" class="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="화면 테마 변경">
+          <svg id="sunIcon" class="w-4 h-4 hidden stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg id="moonIcon" class="w-4 h-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button onclick="openProductModal()" class="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 active:scale-[0.98] rounded-xl shadow-xs transition-all whitespace-nowrap">
+          <svg class="w-4 h-4 stroke-current stroke-[2.5]" fill="none" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span class="hidden sm:inline">상품 등록</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+    <!-- Tip Banner -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-sky-50/70 dark:bg-sky-950/20 rounded-2xl border border-sky-100 dark:border-sky-900/30">
+      <div class="flex items-start gap-3">
+        <div class="p-2 bg-sky-600 text-white rounded-xl shrink-0 mt-0.5">
+          <svg class="w-4 h-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-sky-950 dark:text-sky-100">
+            알뜰 쇼핑 팁: 100g·100ml당 환산 가격으로 진짜 싼 제품을 찾으세요!
+          </h2>
+          <p class="text-xs text-sky-800/80 dark:text-sky-300 mt-0.5">
+            포장 크기나 할인 문구에 속지 마세요. 구매할 때마다 가격을 톡톡 기록하면 우리 동네 최저가를 자동으로 계산해 드립니다.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-start md:self-auto shrink-0">
+        <button onclick="exportData()" class="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5 stroke-current stroke-2 text-slate-500" fill="none" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>백업 저장</span>
+        </button>
+        <label class="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-3.5 h-3.5 stroke-current stroke-2 text-slate-500" fill="none" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>백업 불러오기</span>
+          <input type="file" accept=".json" onchange="importData(event)" class="hidden">
+        </label>
+      </div>
+    </div>
+
+    <!-- VIEW 1: PRODUCT LIST -->
+    <div id="viewList" class="space-y-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <div class="relative w-full sm:flex-1">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="searchInput" oninput="renderProducts()" type="text" placeholder="상품명, 구매처, 메모 검색..." class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white placeholder:text-slate-400">
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-between sm:justify-end">
+            <span class="text-xs text-slate-500">정렬:</span>
+            <select id="sortSelect" onchange="renderProducts()" class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="recent">최근 기록순</option>
+              <option value="name">상품명 가나다순</option>
+              <option value="lowest">단위가격 낮은순</option>
+              <option value="count">기록 횟수 많은순</option>
+            </select>
+          </div>
+        </div>
+        <div id="categoryTabs" class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs"></div>
+      </div>
+
+      <div class="flex items-center justify-between px-1">
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          총 <span id="productTotalCount" class="font-bold text-slate-800 dark:text-slate-200 tabular-nums">0</span>개 상품
+        </div>
+      </div>
+
+      <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- VIEW 2: PRODUCT DETAIL -->
+    <div id="viewDetail" class="hidden space-y-6">
+      <div class="flex items-center justify-between">
+        <button onclick="showView('list')" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-lg transition-colors">
+          <svg class="w-4 h-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>상품 목록으로</span>
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="btnDetailEdit" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 rounded-lg">
+            수정
+          </button>
+          <button id="btnDetailDelete" class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-100 rounded-lg">
+            삭제
+          </button>
+        </div>
+      </div>
+
+      <div id="detailCard" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm"></div>
+      <div id="detailHistoryCard" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4"></div>
+    </div>
+
+    <!-- VIEW 3: QUICK CALCULATOR (즉석 단위가격 비교기) -->
+    <div id="viewCalc" class="hidden">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-sky-600 dark:text-sky-400 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+              <span>현장 즉석 단위가격 비교기</span>
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              마트 매대 앞에서 소용량과 대용량 중 어느 쪽이 진짜 이득인지 1초 만에 비교하세요.
+            </p>
+          </div>
+
+          <!-- Unit Selector -->
+          <div class="flex items-center gap-2">
+            <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+              <button id="calcUnitG" onclick="setCalcUnit('g')" class="px-3 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs">그램 (g)</button>
+              <button id="calcUnitMl" onclick="setCalcUnit('ml')" class="px-3 py-1 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">밀리리터 (ml)</button>
+              <button id="calcUnitCount" onclick="setCalcUnit('count')" class="px-3 py-1 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">개수 (개)</button>
+            </div>
+            <button onclick="resetQuickCalc()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl" title="초기화">
+              <svg class="w-4 h-4 stroke-current stroke-2" fill="none" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Item A -->
+          <div id="cardItemA" class="p-4 rounded-xl border bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">A 상품 (소용량 / 낱개)</span>
+              <span id="badgeA" class="text-[11px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md hidden">★ 가성비 승리</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label id="lblAmountA" class="block text-[11px] font-medium text-slate-500 mb-1">용량/수량 (g)</label>
+                <input id="inputAmountA" type="number" step="any" oninput="calculateQuick()" value="500" placeholder="예: 500" class="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white tabular-nums">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">가격 (원)</label>
+                <input id="inputPriceA" type="number" step="10" oninput="calculateQuick()" value="3800" placeholder="예: 3800" class="w-full px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white tabular-nums">
+              </div>
+            </div>
+            <div class="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 text-center">
+              <span id="lblResultUnitA" class="text-[11px] text-slate-400 block">100g 환산 가격</span>
+              <span id="resultCostA" class="text-base font-bold text-slate-900 dark:text-white tabular-nums">760원</span>
+            </div>
+          </div>
+
+          <!-- Item B -->
+          <div id="cardItemB" class="p-4 rounded-xl border bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">B 상품 (대용량 / 묶음팩)</span>
+              <span id="badgeB" class="text-[11px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md hidden">★ 가성비 승리</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label id="lblAmountB" class="block text-[11px] font-medium text-slate-500 mb-1">용량/수량 (g)</label>
+                <input id="inputAmountB" type="number" step="any" oninput="calculateQuick()" value="1200" placeholder="예: 1200" class="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white tabular-nums">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">가격 (원)</label>
+                <input id="inputPriceB" type="number" step="10" oninput="calculateQuick()" value="8500" placeholder="예: 8500" class="w-full px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white tabular-nums">
+              </div>
+            </div>
+            <div class="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 text-center">
+              <span id="lblResultUnitB" class="text-[11px] text-slate-400 block">100g 환산 가격</span>
+              <span id="resultCostB" class="text-base font-bold text-slate-900 dark:text-white tabular-nums">708원</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Banner -->
+        <div id="quickWinnerBanner" class="p-3.5 bg-sky-50 dark:bg-sky-950/40 rounded-xl border border-sky-200 dark:border-sky-800 text-center">
+          <p id="quickWinnerText" class="text-xs sm:text-sm font-bold text-sky-900 dark:text-sky-200">
+            B 상품이 100g당 52원 (6.8%) 더 저렴합니다!
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 py-6 text-center text-xs text-slate-400">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p>© 2026 가격노트 · 브라우저 저장소(IndexedDB) 기반 개인 맞춤 장보기 기록장</p>
+      <div class="flex items-center gap-3">
+        <button onclick="restoreSamples()" class="hover:text-slate-600 dark:hover:text-slate-300 underline underline-offset-2">샘플 데이터 채우기</button>
+        <span>·</span>
+        <span>오프라인 PWA 지원</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL 1: PRODUCT FORM MODAL -->
+  <div id="productModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="relative w-full max-w-xl my-8 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+        <div>
+          <h2 id="modalTitle" class="text-lg font-bold text-slate-900 dark:text-white">새 상품 등록</h2>
+          <p id="modalSubtitle" class="text-xs text-slate-500 mt-0.5">기본 용량과 첫 구매 가격을 기록해 두세요.</p>
+        </div>
+        <button onclick="closeProductModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
+      </div>
+
+      <form id="formProduct" onsubmit="handleProductSubmit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="editProductId">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">상품명 *</label>
+          <input id="prodName" required type="text" placeholder="예: 코카콜라 제로 1.5L, 삼겹살 600g" class="w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">카테고리</label>
+            <select id="prodCategory" class="w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+              <option value="음료/생수">음료/생수</option>
+              <option value="정육/계란">정육/계란</option>
+              <option value="신선/채소·과일">신선/채소·과일</option>
+              <option value="수산/건어물">수산/건어물</option>
+              <option value="유제품/냉장">유제품/냉장</option>
+              <option value="가공식품/라면">가공식품/라면</option>
+              <option value="간식/베이커리">간식/베이커리</option>
+              <option value="생활/세제·위생">생활/세제·위생</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">기준 규격 *</label>
+            <div class="flex gap-2">
+              <input id="prodAmount" required type="number" min="0.01" step="any" oninput="updateModalCalc()" placeholder="예: 500" class="flex-1 px-3 py-2.5 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+              <select id="prodUnit" onchange="updateModalCalc()" class="w-24 px-2 py-2.5 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white font-medium">
+                <option value="g">그램 (g)</option>
+                <option value="ml">밀리리터 (ml)</option>
+                <option value="count">개 / 팩</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">상품 사진 (선택)</label>
+            <input id="prodPhotoInput" type="file" accept="image/*" onchange="handlePhotoChange(event)" class="text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer">
+            <div id="photoPreviewBox" class="mt-2 hidden">
+              <img id="photoPreviewImg" class="w-14 h-14 object-cover rounded-lg border border-slate-200" alt="사진 미리보기">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">상품 메모</label>
+            <input id="prodNotes" type="text" placeholder="예: 100g당 2,500원 이하 권장" class="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <!-- Initial purchase entry for new products -->
+        <div id="initialPriceFields" class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div class="text-xs font-bold text-sky-600 dark:text-sky-400">첫 구매 기록 등록</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">구매처</label>
+              <input id="firstStore" type="text" placeholder="예: 이마트, 쿠팡" class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">구매 날짜 *</label>
+              <input id="firstDate" type="date" required class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-mono">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">정가 (원)</label>
+              <input id="firstRegular" type="number" step="10" oninput="updateModalCalc()" placeholder="모르면 비워두세요" class="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white tabular-nums">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">실제 구매가 (원) *</label>
+              <input id="firstPaid" type="number" step="10" oninput="updateModalCalc()" placeholder="예: 9900" class="w-full px-3.5 py-2 text-sm font-semibold bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white tabular-nums">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">행사 / 메모</label>
+            <input id="firstMemo" type="text" placeholder="예: 2+1 행사, 쿠폰 적용" class="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white">
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 p-3 bg-sky-50 dark:bg-sky-950/30 rounded-xl border border-sky-100 dark:border-sky-900/40 text-center">
+            <div>
+              <div class="text-[11px] text-sky-700 dark:text-sky-300">단위 환산가</div>
+              <div id="previewUnitPrice" class="text-xs sm:text-sm font-bold text-sky-950 dark:text-sky-200 tabular-nums mt-0.5">-</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-sky-700 dark:text-sky-300">할인 금액</div>
+              <div id="previewDiscountWon" class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 tabular-nums mt-0.5">-</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-sky-700 dark:text-sky-300">할인율</div>
+              <div id="previewDiscountRate" class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" onclick="closeProductModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">취소</button>
+          <button type="submit" class="px-5 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-sm">저장하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD PRICE MODAL -->
+  <div id="priceModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="relative w-full max-w-lg my-8 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+        <div>
+          <h2 id="priceModalTitle" class="text-base font-bold text-slate-900 dark:text-white">가격 기록 추가</h2>
+          <p id="priceModalSubtitle" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button onclick="closePriceModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
+      </div>
+
+      <form id="formPrice" onsubmit="handlePriceSubmit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="priceTargetId">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">구매처</label>
+            <input id="addStore" type="text" placeholder="예: 이마트, 마켓컬리" class="w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">구매 날짜 *</label>
+            <input id="addDate" type="date" required class="w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">정가 (원)</label>
+            <input id="addRegular" type="number" step="10" placeholder="모르면 비워두세요" class="w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white tabular-nums">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">실제 구매가 (원) *</label>
+            <input id="addPaid" type="number" step="10" required placeholder="예: 8900" class="w-full px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white tabular-nums">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label id="lblAddOverride" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">구매 용량</label>
+            <input id="addOverrideAmount" type="number" step="any" placeholder="기본 용량과 다를 때만 입력" class="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">행사 / 메모</label>
+            <input id="addMemo" type="text" placeholder="예: 1+1 행사, 카드 할인" class="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" onclick="closePriceModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">취소</button>
+          <button type="submit" class="px-5 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-sm">가격 기록 추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    const DB_NAME = 'shopping-cal-history';
+    const STORE_NAME = 'products';
+    let db = null;
+    let products = [];
+    let currentDetailId = null;
+    let selectedCategory = '전체';
+    let currentPhotoBase64 = null;
+    let calcUnit = 'g';
+
+    const SAMPLE_DATA = [
+      {
+        id: 'sample-water',
+        name: '삼다수 생수 2L 6개입',
+        category: '음료/생수',
+        amount: 12000,
+        unit: 'ml',
+        photo: null,
+        notes: '가정용 주 생수. 100ml당 45원 이하일 때 특가!',
+        createdAt: '2026-10-01T10:00:00.000Z',
+        updatedAt: '2026-11-02T12:00:00.000Z',
+        history: [
+          { id: 'h-1', store: '이마트 트레이더스', date: '2026-10-02', regularPrice: 6500, paidPrice: 5380, memo: '묶음 할인 프로모션' },
+          { id: 'h-2', store: '쿠팡 로켓배송', date: '2026-10-18', regularPrice: 6200, paidPrice: 5900, memo: '정기배송 5% 할인' },
+          { id: 'h-3', store: '동네 하나로마트', date: '2026-11-02', regularPrice: 6400, paidPrice: 4980, memo: '주말 깜짝 타임세일 (역대 최저)' }
+        ]
+      },
+      {
+        id: 'sample-pork',
+        name: '국내산 냉장 삼겹살 구이용',
+        category: '정육/계란',
+        amount: 600,
+        unit: 'g',
+        photo: null,
+        notes: '100g당 2,100원 이하면 바로 구입하기',
+        createdAt: '2026-10-10T09:00:00.000Z',
+        updatedAt: '2026-11-05T17:30:00.000Z',
+        history: [
+          { id: 'h-4', store: '롯데마트', date: '2026-10-10', regularPrice: 16800, paidPrice: 14400, memo: '엘포인트 적립 할인 (100g 2,400원)' },
+          { id: 'h-5', store: '전통시장 정육점', date: '2026-11-05', regularPrice: 14000, paidPrice: 12000, memo: '온누리상품권 10% 추가 체감' }
+        ]
+      },
+      {
+        id: 'sample-detergent',
+        name: '퍼실 파워젤 세탁세제 리필',
+        category: '생활/세제·위생',
+        amount: 2700,
+        unit: 'ml',
+        photo: null,
+        notes: '2.7L 대용량 리필팩. 100ml당 450원 기준',
+        createdAt: '2026-09-15T08:00:00.000Z',
+        updatedAt: '2026-10-25T14:15:00.000Z',
+        history: [
+          { id: 'h-6', store: '홈플러스', date: '2026-09-15', regularPrice: 17900, paidPrice: 14900, memo: '1+1 전단지 행사' },
+          { id: 'h-7', store: '네이버 공식몰', date: '2026-10-25', regularPrice: 16500, paidPrice: 11900, memo: '라이브 방송 알림 쿠폰 적용' }
+        ]
+      }
+    ];
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 2);
+        req.onupgradeneeded = () => {
+          const d = req.result;
+          if (!d.objectStoreNames.contains(STORE_NAME)) {
+            d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function loadAllProducts() {
+      try {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.getAll();
+        return new Promise(resolve => {
+          req.onsuccess = () => {
+            let res = req.result || [];
+            if (!res.length) {
+              // seed
+              SAMPLE_DATA.forEach(p => saveProductToDB(p));
+              res = SAMPLE_DATA;
+            }
+            resolve(res);
+          };
+          req.onerror = () => resolve(SAMPLE_DATA);
+        });
+      } catch {
+        return SAMPLE_DATA;
+      }
+    }
+
+    function saveProductToDB(p) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(p);
+        tx.oncomplete = resolve;
+        tx.onerror = reject;
+      });
+    }
+
+    function deleteProductFromDB(id) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(id);
+        tx.oncomplete = resolve;
+        tx.onerror = reject;
+      });
+    }
+
+    function won(n) {
+      return `${Math.round(n).toLocaleString('ko-KR')}원`;
+    }
+
+    function getCalc(product, entry) {
+      const amt = (entry.amount && entry.amount > 0) ? entry.amount : product.amount;
+      const unitPrice = amt > 0 ? entry.paidPrice / amt : 0;
+      let stdPrice = unitPrice;
+      let stdLabel = '1g';
+      if (product.unit === 'g') {
+        stdPrice = unitPrice * 100;
+        stdLabel = '100g';
+      } else if (product.unit === 'ml') {
+        stdPrice = unitPrice * 100;
+        stdLabel = '100ml';
+      } else {
+        stdPrice = unitPrice;
+        stdLabel = '1개';
+      }
+      const reg = entry.regularPrice > 0 ? entry.regularPrice : 0;
+      const discountAmount = reg > entry.paidPrice ? reg - entry.paidPrice : 0;
+      const discountRate = reg > 0 ? (discountAmount / reg) * 100 : 0;
+      return { unitPrice, stdPrice, stdLabel, discountAmount, discountRate };
+    }
+
+    // View Switcher
+    function showView(view) {
+      document.getElementById('viewList').classList.toggle('hidden', view !== 'list');
+      document.getElementById('viewDetail').classList.toggle('hidden', view !== 'detail');
+      document.getElementById('viewCalc').classList.toggle('hidden', view !== 'calc');
+
+      const btnList = document.getElementById('tabList');
+      const btnCalc = document.getElementById('tabCalc');
+
+      if (view === 'list') {
+        btnList.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs transition-colors';
+        btnCalc.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1';
+        renderProducts();
+      } else if (view === 'calc') {
+        btnCalc.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs transition-colors flex items-center gap-1';
+        btnList.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors';
+        calculateQuick();
+      } else {
+        btnList.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors';
+        btnCalc.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1';
+      }
+    }
+
+    function renderProducts() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const sortBy = document.getElementById('sortSelect').value;
+
+      // Extract categories
+      const catSet = new Set(['전체']);
+      products.forEach(p => p.category && catSet.add(p.category));
+      const catArr = Array.from(catSet);
+      document.getElementById('categoryTabs').innerHTML = catArr.map(c => `
+        <button onclick="setCategory('${c}')" class="px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors font-medium shrink-0 ${selectedCategory === c ? 'bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}">${c}</button>
+      `).join('');
+
+      // Filter
+      let filtered = products.filter(p => {
+        if (selectedCategory !== '전체' && p.category !== selectedCategory) return false;
+        if (!q) return true;
+        const inName = p.name.toLowerCase().includes(q);
+        const inStores = p.history.some(h => (h.store||'').toLowerCase().includes(q));
+        const inNotes = (p.notes||'').toLowerCase().includes(q);
+        return inName || inStores || inNotes;
+      });
+
+      // Sort
+      filtered.sort((a,b) => {
+        if (sortBy === 'name') return a.name.localeCompare(b.name, 'ko');
+        if (sortBy === 'count') return b.history.length - a.history.length;
+        if (sortBy === 'lowest') {
+          const minA = a.history.length ? Math.min(...a.history.map(h => getCalc(a,h).stdPrice)) : Infinity;
+          const minB = b.history.length ? Math.min(...b.history.map(h => getCalc(b,h).stdPrice)) : Infinity;
+          return minA - minB;
+        }
+        const dateA = a.history.length ? a.history[a.history.length-1].date : a.createdAt;
+        const dateB = b.history.length ? b.history[b.history.length-1].date : b.createdAt;
+        return (dateB||'').localeCompare(dateA||'');
+      });
+
+      document.getElementById('productTotalCount').textContent = filtered.length;
+
+      const grid = document.getElementById('productGrid');
+      if (!filtered.length) {
+        grid.innerHTML = `
+          <div class="col-span-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center shadow-sm">
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">등록된 상품이 없습니다</h3>
+            <p class="text-xs text-slate-500 mt-1">상단 '+ 상품 등록' 버튼으로 첫 상품을 기록해 보세요.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const sorted = [...p.history].sort((x,y) => y.date.localeCompare(x.date));
+        const latest = sorted[0];
+        const latestCalc = latest ? getCalc(p, latest) : null;
+        let lowest = null;
+        p.history.forEach(h => {
+          const c = getCalc(p, h);
+          if (!lowest || c.stdPrice < lowest.stdPrice) lowest = c;
+        });
+
+        return `
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-start gap-3.5">
+                ${p.photo ? `<img src="${p.photo}" class="w-16 h-16 rounded-xl object-cover border border-slate-100 dark:border-slate-800 shrink-0" alt="">` : `
+                  <div class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+                    <svg class="w-6 h-6 stroke-current stroke-[1.5]" fill="none" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  </div>
+                `}
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mb-0.5">
+                    <span class="truncate">${p.category||'기타'}</span>
+                    <span>·</span>
+                    <span>${p.amount.toLocaleString()} ${p.unit}</span>
+                  </div>
+                  <button onclick="openDetail('${p.id}')" class="text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white hover:text-sky-600 line-clamp-1 transition-colors">
+                    ${p.name}
+                  </button>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs font-bold text-slate-950 dark:text-slate-100 tabular-nums">${latest ? won(latest.paidPrice) : '기록 없음'}</span>
+                    ${latest ? `<span class="text-[11px] text-slate-400 truncate">(${latest.store})</span>` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 mt-3 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800/80">
+                <div>
+                  <div class="text-[10px] text-slate-500">최근 단위가</div>
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 tabular-nums mt-0.5">
+                    ${latestCalc ? `${Math.round(latestCalc.stdPrice).toLocaleString()}원 / ${latestCalc.stdLabel}` : '-'}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">★ 역대 최저</div>
+                  <div class="text-xs font-bold text-emerald-700 dark:text-emerald-300 tabular-nums mt-0.5 truncate">
+                    ${lowest ? `${Math.round(lowest.stdPrice).toLocaleString()}원 / ${lowest.stdLabel}` : '-'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+              <span class="text-[11px] text-slate-400">기록 <b class="text-slate-700 dark:text-slate-300">${p.history.length}</b>회</span>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openPriceModal('${p.id}')" class="px-2.5 py-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 rounded-lg transition-colors">+ 가격 추가</button>
+                <button onclick="openDetail('${p.id}')" class="px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 dark:bg-sky-600 hover:bg-slate-800 rounded-lg transition-colors">이력 보기</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setCategory(cat) {
+      selectedCategory = cat;
+      renderProducts();
+    }
+
+    // Detail View
+    function openDetail(id) {
+      currentDetailId = id;
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+
+      const sorted = [...p.history].sort((a,b) => b.date.localeCompare(a.date));
+      let minH = null, maxH = null;
+      p.history.forEach(h => {
+        const c = getCalc(p, h);
+        if (!minH || c.stdPrice < minH.stdPrice) minH = c;
+        if (!maxH || c.stdPrice > maxH.stdPrice) maxH = c;
+      });
+
+      const latest = sorted[0];
+      const latestCalc = latest ? getCalc(p, latest) : null;
+
+      document.getElementById('detailCard').innerHTML = `
+        <div class="flex flex-col sm:flex-row gap-5 items-start">
+          ${p.photo ? `<img src="${p.photo}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-800 shrink-0" alt="">` : `
+            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+              <svg class="w-8 h-8 stroke-current stroke-[1.5]" fill="none" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+          `}
+          <div class="flex-1 min-w-0 space-y-2">
+            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span>${p.category||'기타'}</span>
+              <span>·</span>
+              <span>기준 ${p.amount.toLocaleString()} ${p.unit}</span>
+              <span>·</span>
+              <span>총 ${p.history.length}회 기록</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-950 dark:text-white tracking-tight">${p.name}</h1>
+            ${p.notes ? `<p class="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">💡 메모: ${p.notes}</p>` : ''}
+            <div class="pt-2">
+              <button onclick="openPriceModal('${p.id}')" class="px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-xs transition-all">+ 새 구매 가격 추가</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+          <div class="p-3.5 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
+            <div class="text-xs font-medium text-emerald-800 dark:text-emerald-300">★ 역대 최저 단위가</div>
+            <div class="text-lg sm:text-xl font-bold text-emerald-950 dark:text-emerald-200 tabular-nums mt-1">
+              ${minH ? `${Math.round(minH.stdPrice).toLocaleString()}원 / ${minH.stdLabel}` : '-'}
+            </div>
+          </div>
+          <div class="p-3.5 bg-sky-50/60 dark:bg-sky-950/20 rounded-xl border border-sky-100 dark:border-sky-900/40">
+            <div class="text-xs font-medium text-sky-800 dark:text-sky-300">최근 구매 가격</div>
+            <div class="text-lg sm:text-xl font-bold text-sky-950 dark:text-sky-200 tabular-nums mt-1">
+              ${latest ? won(latest.paidPrice) : '-'}
+            </div>
+            <div class="text-[11px] text-sky-700/80 dark:text-sky-400 mt-1">${latestCalc ? `${Math.round(latestCalc.stdPrice).toLocaleString()}원 / ${latestCalc.stdLabel} (${latest.store})` : '-'}</div>
+          </div>
+          <div class="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div class="text-xs font-medium text-slate-600 dark:text-slate-400">가격 변동 폭</div>
+            <div class="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-200 tabular-nums mt-1">
+              ${minH && maxH ? `${Math.round(maxH.stdPrice - minH.stdPrice).toLocaleString()}원 차이` : '-'}
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">총 ${p.history.length}번의 장보기 내역</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('detailHistoryCard').innerHTML = `
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white">구매 가격 이력 (${sorted.length}회)</h2>
+          <span class="text-xs text-slate-400">최신순 정렬</span>
+        </div>
+        <div class="divide-y divide-slate-100 dark:divide-slate-800/80">
+          ${sorted.map(item => {
+            const c = getCalc(p, item);
+            const isBest = minH && Math.abs(c.stdPrice - minH.stdPrice) < 0.01;
+            return `
+              <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-900 dark:text-white font-mono">${item.date}</span>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">${item.store}</span>
+                    ${isBest ? `<span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200">역대 최저</span>` : ''}
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span>단위가 ${Math.round(c.stdPrice).toLocaleString()}원 / ${c.stdLabel}</span>
+                    ${item.amount && item.amount !== p.amount ? `<span>·</span><span>용량 ${item.amount.toLocaleString()} ${p.unit}</span>` : ''}
+                    ${item.regularPrice > 0 ? `<span>·</span><span>정가 ${won(item.regularPrice)} (${c.discountRate.toFixed(1)}% 할인)</span>` : ''}
+                    ${item.memo ? `<span>·</span><span class="text-slate-600 dark:text-slate-300 italic">"${item.memo}"</span>` : ''}
+                  </div>
+                </div>
+                <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0">
+                  <div class="text-right">
+                    <div class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tabular-nums">${won(item.paidPrice)}</div>
+                    <div class="text-[11px] text-slate-400">${c.unitPrice.toFixed(2)}원 / ${p.unit}</div>
+                  </div>
+                  <button onclick="deleteHistoryEntry('${p.id}', '${item.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg">✕</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      document.getElementById('btnDetailEdit').onclick = () => openProductModal(p);
+      document.getElementById('btnDetailDelete').onclick = async () => {
+        if (confirm(`'${p.name}' 상품을 삭제할까요?`)) {
+          await deleteProductFromDB(p.id);
+          products = await loadAllProducts();
+          showView('list');
+        }
+      };
+
+      showView('detail');
+    }
+
+    async function deleteHistoryEntry(prodId, historyId) {
+      if (!confirm('이 구매 기록을 삭제하시겠습니까?')) return;
+      const p = products.find(x => x.id === prodId);
+      if (!p) return;
+      p.history = p.history.filter(h => h.id !== historyId);
+      await saveProductToDB(p);
+      products = await loadAllProducts();
+      openDetail(prodId);
+    }
+
+    // Quick Calculator
+    function setCalcUnit(u) {
+      calcUnit = u;
+      document.getElementById('calcUnitG').className = u === 'g' ? 'px-3 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs' : 'px-3 py-1 text-xs font-semibold rounded-lg text-slate-500';
+      document.getElementById('calcUnitMl').className = u === 'ml' ? 'px-3 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs' : 'px-3 py-1 text-xs font-semibold rounded-lg text-slate-500';
+      document.getElementById('calcUnitCount').className = u === 'count' ? 'px-3 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs' : 'px-3 py-1 text-xs font-semibold rounded-lg text-slate-500';
+
+      const label = u === 'count' ? '수량 (개)' : `용량/수량 (${u})`;
+      document.getElementById('lblAmountA').textContent = label;
+      document.getElementById('lblAmountB').textContent = label;
+      calculateQuick();
+    }
+
+    function calculateQuick() {
+      const amtA = Number(document.getElementById('inputAmountA').value) || 0;
+      const prcA = Number(document.getElementById('inputPriceA').value) || 0;
+      const amtB = Number(document.getElementById('inputAmountB').value) || 0;
+      const prcB = Number(document.getElementById('inputPriceB').value) || 0;
+
+      const costA = (amtA > 0 && prcA > 0) ? prcA / amtA : 0;
+      const costB = (amtB > 0 && prcB > 0) ? prcB / amtB : 0;
+
+      const mult = calcUnit === 'count' ? 1 : 100;
+      const stdA = costA * mult;
+      const stdB = costB * mult;
+      const unitLabel = calcUnit === 'count' ? '1개' : `100${calcUnit}`;
+
+      document.getElementById('lblResultUnitA').textContent = `${unitLabel} 환산 가격`;
+      document.getElementById('lblResultUnitB').textContent = `${unitLabel} 환산 가격`;
+
+      document.getElementById('resultCostA').textContent = stdA > 0 ? won(stdA) : '-';
+      document.getElementById('resultCostB').textContent = stdB > 0 ? won(stdB) : '-';
+
+      const cardA = document.getElementById('cardItemA');
+      const cardB = document.getElementById('cardItemB');
+      const badgeA = document.getElementById('badgeA');
+      const badgeB = document.getElementById('badgeB');
+      const banner = document.getElementById('quickWinnerBanner');
+      const text = document.getElementById('quickWinnerText');
+
+      badgeA.classList.add('hidden');
+      badgeB.classList.add('hidden');
+      cardA.className = 'p-4 rounded-xl border bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 transition-all';
+      cardB.className = 'p-4 rounded-xl border bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 transition-all';
+
+      if (costA > 0 && costB > 0) {
+        banner.classList.remove('hidden');
+        if (costA < costB) {
+          const diffWon = stdB - stdA;
+          const diffRate = ((costB - costA) / costB) * 100;
+          text.textContent = `A 상품이 ${unitLabel}당 ${Math.round(diffWon).toLocaleString()}원 (${diffRate.toFixed(1)}%) 더 저렴합니다!`;
+          badgeA.classList.remove('hidden');
+          cardA.className = 'p-4 rounded-xl border bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-700/60 ring-1 ring-emerald-400 transition-all';
+        } else if (costB < costA) {
+          const diffWon = stdA - stdB;
+          const diffRate = ((costA - costB) / costA) * 100;
+          text.textContent = `B 상품이 ${unitLabel}당 ${Math.round(diffWon).toLocaleString()}원 (${diffRate.toFixed(1)}%) 더 저렴합니다!`;
+          badgeB.classList.remove('hidden');
+          cardB.className = 'p-4 rounded-xl border bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-700/60 ring-1 ring-emerald-400 transition-all';
+        } else {
+          text.textContent = '두 상품의 단위 가격이 완벽히 동일합니다.';
+        }
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function resetQuickCalc() {
+      document.getElementById('inputAmountA').value = '';
+      document.getElementById('inputPriceA').value = '';
+      document.getElementById('inputAmountB').value = '';
+      document.getElementById('inputPriceB').value = '';
+      calculateQuick();
+    }
+
+    // Modals
+    function openProductModal(prod = null) {
+      document.getElementById('formProduct').reset();
+      currentPhotoBase64 = null;
+      document.getElementById('photoPreviewBox').classList.add('hidden');
+
+      if (prod) {
+        document.getElementById('modalTitle').textContent = '상품 정보 수정';
+        document.getElementById('modalSubtitle').textContent = '규격 및 카테고리를 변경합니다.';
+        document.getElementById('editProductId').value = prod.id;
+        document.getElementById('prodName').value = prod.name;
+        document.getElementById('prodCategory').value = prod.category || '기타';
+        document.getElementById('prodAmount').value = prod.amount;
+        document.getElementById('prodUnit').value = prod.unit;
+        document.getElementById('prodNotes').value = prod.notes || '';
+        document.getElementById('initialPriceFields').classList.add('hidden');
+        if (prod.photo) {
+          currentPhotoBase64 = prod.photo;
+          document.getElementById('photoPreviewImg').src = prod.photo;
+          document.getElementById('photoPreviewBox').classList.remove('hidden');
+        }
+      } else {
+        document.getElementById('modalTitle').textContent = '새 상품 등록';
+        document.getElementById('modalSubtitle').textContent = '기본 용량과 첫 구매 가격을 기록해 두세요.';
+        document.getElementById('editProductId').value = '';
+        document.getElementById('firstDate').value = new Date().toISOString().slice(0,10);
+        document.getElementById('initialPriceFields').classList.remove('hidden');
+      }
+      updateModalCalc();
+      document.getElementById('productModal').classList.remove('hidden');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.add('hidden');
+    }
+
+    function updateModalCalc() {
+      const amt = Number(document.getElementById('prodAmount').value) || 0;
+      const unit = document.getElementById('prodUnit').value;
+      const paid = Number(document.getElementById('firstPaid').value) || 0;
+      const reg = Number(document.getElementById('firstRegular').value) || 0;
+
+      let std = '-';
+      if (amt > 0 && paid > 0) {
+        const mult = unit === 'count' ? 1 : 100;
+        const uLabel = unit === 'count' ? '1개' : `100${unit}`;
+        std = `${Math.round((paid / amt) * mult).toLocaleString()}원 / ${uLabel}`;
+      }
+      document.getElementById('previewUnitPrice').textContent = std;
+
+      const diff = reg > paid ? reg - paid : 0;
+      document.getElementById('previewDiscountWon').textContent = diff > 0 ? won(diff) : '-';
+      document.getElementById('previewDiscountRate').textContent = reg > 0 && diff > 0 ? `${(diff / reg * 100).toFixed(1)}%` : '-';
+    }
+
+    function handlePhotoChange(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const max = 350;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        document.getElementById('photoPreviewImg').src = currentPhotoBase64;
+        document.getElementById('photoPreviewBox').classList.remove('hidden');
+      };
+      img.src = url;
+    }
+
+    async function handleProductSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('editProductId').value;
+      const name = document.getElementById('prodName').value.trim();
+      const category = document.getElementById('prodCategory').value;
+      const amount = Number(document.getElementById('prodAmount').value);
+      const unit = document.getElementById('prodUnit').value;
+      const notes = document.getElementById('prodNotes').value.trim();
+
+      if (id) {
+        const p = products.find(x => x.id === id);
+        if (p) {
+          p.name = name;
+          p.category = category;
+          p.amount = amount;
+          p.unit = unit;
+          p.notes = notes;
+          if (currentPhotoBase64) p.photo = currentPhotoBase64;
+          p.updatedAt = new Date().toISOString();
+          await saveProductToDB(p);
+        }
+      } else {
+        const paid = Number(document.getElementById('firstPaid').value);
+        const reg = Number(document.getElementById('firstRegular').value) || 0;
+        const store = document.getElementById('firstStore').value.trim() || '구매처 미입력';
+        const date = document.getElementById('firstDate').value || new Date().toISOString().slice(0,10);
+        const memo = document.getElementById('firstMemo').value.trim();
+
+        const newP = {
+          id: crypto.randomUUID(),
+          name, category, amount, unit, notes,
+          photo: currentPhotoBase64,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          history: [{
+            id: crypto.randomUUID(),
+            store, date, regularPrice: reg, paidPrice: paid, memo
+          }]
+        };
+        await saveProductToDB(newP);
+      }
+
+      closeProductModal();
+      products = await loadAllProducts();
+      if (id && currentDetailId === id) openDetail(id);
+      else showView('list');
+    }
+
+    function openPriceModal(prodId) {
+      const p = products.find(x => x.id === prodId);
+      if (!p) return;
+      document.getElementById('formPrice').reset();
+      document.getElementById('priceTargetId').value = prodId;
+      document.getElementById('priceModalTitle').textContent = p.name;
+      document.getElementById('priceModalSubtitle').textContent = `기준 규격: ${p.amount.toLocaleString()} ${p.unit} · 새 구매 가격 추가`;
+      document.getElementById('lblAddOverride').textContent = `구매 용량 (${p.unit})`;
+      document.getElementById('addDate').value = new Date().toISOString().slice(0,10);
+      document.getElementById('priceModal').classList.remove('hidden');
+    }
+
+    function closePriceModal() {
+      document.getElementById('priceModal').classList.add('hidden');
+    }
+
+    async function handlePriceSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('priceTargetId').value;
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+
+      const store = document.getElementById('addStore').value.trim() || '구매처 미입력';
+      const date = document.getElementById('addDate').value;
+      const regularPrice = Number(document.getElementById('addRegular').value) || 0;
+      const paidPrice = Number(document.getElementById('addPaid').value);
+      const overrideAmt = Number(document.getElementById('addOverrideAmount').value);
+      const memo = document.getElementById('addMemo').value.trim();
+
+      p.history.push({
+        id: crypto.randomUUID(),
+        store, date, regularPrice, paidPrice, memo,
+        amount: overrideAmt > 0 ? overrideAmt : undefined
+      });
+      p.updatedAt = new Date().toISOString();
+
+      await saveProductToDB(p);
+      closePriceModal();
+      products = await loadAllProducts();
+      if (currentDetailId === id) openDetail(id);
+      else renderProducts();
+    }
+
+    // Theme Toggle
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcons(isDark);
+    }
+    function updateThemeIcons(isDark) {
+      document.getElementById('sunIcon').classList.toggle('hidden', !isDark);
+      document.getElementById('moonIcon').classList.toggle('hidden', isDark);
+    }
+
+    // Backup & Restore
+    function exportData() {
+      const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `가격노트_백업_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    function importData(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (Array.isArray(data)) {
+            for (const item of data) await saveProductToDB(item);
+            products = await loadAllProducts();
+            renderProducts();
+            alert(`성공적으로 ${data.length}개의 상품을 불러왔습니다!`);
+          }
+        } catch {
+          alert('올바른 백업 파일이 아닙니다.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function restoreSamples() {
+      if (confirm('샘플 데이터 3건을 다시 채워 넣을까요?')) {
+        for (const s of SAMPLE_DATA) await saveProductToDB(s);
+        products = await loadAllProducts();
+        renderProducts();
+      }
+    }
+
+    // Initialization
+    (async () => {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+      if (isDark) document.documentElement.classList.add('dark');
+      updateThemeIcons(isDark);
+
+      try {
+        db = await openDatabase();
+        products = await loadAllProducts();
+      } catch (e) {
+        products = SAMPLE_DATA;
+      }
+      renderProducts();
+      calculateQuick();
+
+      // PWA service worker
+      if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+    })();
+  </script>
+</body>
+</html>
