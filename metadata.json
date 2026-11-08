@@ -1,0 +1,6 @@
+{
+  "name": "가격노트 - 알뜰 장보기 단위가격 & 최저가 기록",
+  "description": "식료품과 생필품의 용량별 단위가격(100g/100ml당)을 실시간 계산하고, 역대 최저가 및 구매처별 가격 변동을 추적·비교하는 스마트 장보기 노트",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
