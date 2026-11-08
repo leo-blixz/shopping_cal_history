@@ -1,10 +1,244 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>상품 가격 기록</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1769aa">
+  <meta name="description" content="개인 상품 가격 기록 및 비교 앱">
+  <link rel="manifest" href="manifest.json">
+  <title>상품 가격 기록</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;color:#202733;background:#f4f6f9}
+    *{box-sizing:border-box} body{margin:0} header{background:#1769aa;color:white;padding:22px 16px 18px}
+    header h1{font-size:22px;margin:0 0 5px} header p{margin:0;font-size:13px;opacity:.9}
+    main{max-width:850px;margin:0 auto;padding:16px}
+    .tabs{display:flex;gap:8px;margin-bottom:14px}.tabs button{flex:1}
+    button{border:0;border-radius:10px;padding:11px 14px;background:#e4eaf1;color:#263445;font-weight:650;font-size:14px;cursor:pointer}
+    button.primary{background:#1769aa;color:white} button.danger{background:#fff0f0;color:#b42318}
+    .panel,.product{background:white;border:1px solid #e5eaf0;border-radius:14px;padding:15px;margin-bottom:12px}
+    h2{font-size:17px;margin:0 0 13px} h3{font-size:16px;margin:0 0 6px}
+    label{display:block;font-size:13px;font-weight:650;margin:10px 0 5px;color:#445064}
+    input,select{width:100%;padding:11px;border:1px solid #ccd5df;border-radius:9px;font:inherit;background:white}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .hint{font-size:12px;color:#687587;line-height:1.5}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+    .metric{background:#f2f6fb;border-radius:10px;padding:10px}.metric small{display:block;color:#64748b;font-size:11px}.metric strong{font-size:16px}
+    .product-head{display:flex;gap:12px;align-items:center}.thumb{width:66px;height:66px;object-fit:cover;border-radius:10px;background:#eef2f6;flex:none}
+    .product-info{flex:1;min-width:0}.product-info p{margin:4px 0;color:#64748b;font-size:12px}
+    .product-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+    .empty{text-align:center;color:#718096;padding:28px 10px;font-size:14px}
+    .history-row{border-top:1px solid #edf0f4;padding:10px 0;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+    .hidden{display:none!important}.preview{width:90px;height:90px;object-fit:cover;border-radius:10px;margin-top:8px}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    @media(max-width:520px){main{padding:12px}.grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr 1fr}.metric strong{font-size:14px}}
+  </style>
 </head>
 <body>
-    <h1>상품 가격 기록 앱</h1>
+<header><h1>상품 가격 기록</h1><p>구매 가격을 기록하고 단위 가격과 최저가를 비교해 보세요.</p></header>
+<main>
+  <div class="tabs">
+    <button id="tabList" class="primary" type="button">상품 목록</button>
+    <button id="tabAdd" type="button">상품 등록</button>
+  </div>
+
+  <section id="listView">
+    <div class="panel">
+      <div class="topline"><h2>내 상품</h2><span id="productCount" class="hint">0개</span></div>
+      <input id="filter" placeholder="상품명 또는 구매처 검색">
+    </div>
+    <div id="products"></div>
+  </section>
+
+  <section id="formView" class="hidden">
+    <form id="productForm" class="panel">
+      <h2 id="formTitle">새 상품 등록</h2>
+      <input type="hidden" id="editingId">
+      <label for="name">상품명 *</label><input id="name" required maxlength="100" placeholder="예: 생수 2L 6개입">
+      <div class="grid">
+        <div><label for="amount">총 용량 *</label><input id="amount" type="number" min="0.001" step="any" required placeholder="예: 12000"></div>
+        <div><label for="unit">용량 단위 *</label><select id="unit"><option value="g">g</option><option value="ml">ml</option></select></div>
+      </div>
+      <label for="photo">상품 사진 (선택)</label><input id="photo" type="file" accept="image/*">
+      <img id="preview" class="preview hidden" alt="상품 사진 미리보기">
+      <p class="hint">사진은 앱 안에서 약 300×300px로 줄여 압축한 뒤 이 기기에 저장합니다.</p>
+      <hr style="border:0;border-top:1px solid #edf0f4;margin:16px 0">
+      <h2>첫 구매 기록</h2>
+      <div class="grid">
+        <div><label for="store">구매처</label><input id="store" maxlength="80" placeholder="예: 동네마트"></div>
+        <div><label for="date">구매 날짜 *</label><input id="date" type="date" required></div>
+        <div><label for="regular">정가 (원)</label><input id="regular" type="number" min="0" step="1" placeholder="예: 12000"></div>
+        <div><label for="paid">실제 구매가 (원) *</label><input id="paid" type="number" min="0" step="1" required placeholder="예: 9900"></div>
+      </div>
+      <div class="summary">
+        <div class="metric"><small>할인 금액</small><strong id="discount">-</strong></div>
+        <div class="metric"><small>할인율</small><strong id="rate">-</strong></div>
+        <div class="metric"><small>단위 가격</small><strong id="unitPrice">-</strong></div>
+      </div>
+      <div class="product-actions">
+        <button class="primary" type="submit">저장하기</button>
+        <button id="cancelForm" type="button">취소</button>
+      </div>
+      <p class="hint">상품을 먼저 등록한 뒤, 상품 카드의 ‘가격 추가’로 다음 구매 기록을 계속 쌓을 수 있습니다.</p>
+    </form>
+  </section>
+
+  <section id="detailView" class="hidden">
+    <div class="panel">
+      <button id="backList" type="button">← 목록으로</button>
+      <div id="detailContent" style="margin-top:14px"></div>
+    </div>
+  </section>
+  <p class="hint">데이터와 사진은 현재 브라우저의 이 기기에 저장됩니다. 브라우저 데이터 삭제나 기기 변경에 대비해 백업 기능은 추후 추가하는 것이 좋습니다.</p>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const dbName = 'shopping-cal-history', storeName = 'products';
+  let db, photoData = null, currentDetail = null;
+  const today = new Date();
+  $('date').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      const req=indexedDB.open(dbName,1);
+      req.onupgradeneeded=()=>req.result.createObjectStore(storeName,{keyPath:'id'});
+      req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+    });
+  }
+  function allProducts(){
+    return new Promise((resolve,reject)=>{
+      const req=db.transaction(storeName).objectStore(storeName).getAll();
+      req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+    });
+  }
+  function saveProduct(p){
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(storeName,'readwrite');
+      tx.objectStore(storeName).put(p);
+      tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
+    });
+  }
+  function deleteProduct(id){
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).delete(id);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+    });
+  }
+  const won = n => `${Math.round(n).toLocaleString('ko-KR')}원`;
+  const safe = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function calc(p, entry){
+    const discount=Math.max(0,(Number(entry.regular)||0)-(Number(entry.paid)||0));
+    const rate=Number(entry.regular)>0?discount/Number(entry.regular)*100:0;
+    return {discount,rate,unitPrice:Number(p.amount)>0?Number(entry.paid)/Number(p.amount):0};
+  }
+  function switchView(view){
+    $('listView').classList.toggle('hidden',view!=='list');
+    $('formView').classList.toggle('hidden',view!=='form');
+    $('detailView').classList.toggle('hidden',view!=='detail');
+    $('tabList').classList.toggle('primary',view==='list');
+    $('tabAdd').classList.toggle('primary',view==='form');
+  }
+  function resetForm(){
+    $('productForm').reset();$('editingId').value='';$('formTitle').textContent='새 상품 등록';
+    photoData=null;$('preview').src='';$('preview').classList.add('hidden');
+    $('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    updateCalc();
+  }
+  function updateCalc(){
+    const amount=Number($('amount').value), paid=Number($('paid').value), regular=Number($('regular').value);
+    $('discount').textContent=regular>0&&paid>=0?won(Math.max(0,regular-paid)):'-';
+    $('rate').textContent=regular>0&&paid>=0?`${(Math.max(0,regular-paid)/regular*100).toFixed(1)}%`:'-';
+    $('unitPrice').textContent=amount>0&&paid>=0?`${(paid/amount).toFixed(2)}원/${$('unit').value}`:'-';
+  }
+  ['amount','regular','paid','unit'].forEach(id=>$(id).addEventListener('input',updateCalc));
+  $('photo').addEventListener('change',async e=>{
+    const file=e.target.files?.[0];if(!file)return;
+    try{
+      photoData=await compressImage(file);
+      $('preview').src=photoData;$('preview').classList.remove('hidden');
+    }catch(err){alert('사진을 읽지 못했습니다. 다른 사진을 선택해 주세요.');}
+  });
+  function compressImage(file){
+    return new Promise((resolve,reject)=>{
+      const img=new Image(),url=URL.createObjectURL(file);
+      img.onload=()=>{
+        const side=300,scale=Math.min(1,side/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        URL.revokeObjectURL(url);
+        let quality=.82, data=canvas.toDataURL('image/webp',quality);
+        while(data.length>140000&&quality>.45){quality-=.08;data=canvas.toDataURL('image/webp',quality);}
+        resolve(data);
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('image'));};img.src=url;
+    });
+  }
+  $('productForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const id=crypto.randomUUID();
+    const existing=null;
+    const p={
+      id,name:$('name').value.trim(),amount:Number($('amount').value),unit:$('unit').value,
+      photo:photoData??existing?.photo??null,
+      history:[]
+    };
+    if(!p.name||p.amount<=0){alert('상품명과 용량을 확인해 주세요.');return;}
+    p.history.push({id:crypto.randomUUID(),store:$('store').value.trim(),date:$('date').value,
+      regular:Number($('regular').value)||0,paid:Number($('paid').value)});
+    await saveProduct(p);resetForm();await renderList();switchView('list');
+  });
+  function best(p){return p.history.length?Math.min(...p.history.map(h=>h.paid/ p.amount)):null;}
+  async function renderList(){
+    const items=await allProducts(), q=$('filter').value.trim().toLowerCase();
+    $('productCount').textContent=`${items.length}개`;
+    const filtered=items.filter(p=>`${p.name} ${p.history.map(h=>h.store).join(' ')}`.toLowerCase().includes(q));
+    $('products').innerHTML=filtered.length?filtered.map(p=>{
+      const last=[...p.history].sort((a,b)=>b.date.localeCompare(a.date))[0], low=best(p);
+      const unitPrice=last?last.paid/p.amount:null;
+      return `<article class="product"><div class="product-head">
+        ${p.photo?`<img class="thumb" src="${p.photo}" alt="">`:'<div class="thumb"></div>'}
+        <div class="product-info"><h3>${safe(p.name)}</h3><p>${p.amount.toLocaleString()}${p.unit} · ${p.history.length}회 구매 기록</p>
+        <strong>${last?won(last.paid):'-'}</strong><p>${last?safe(last.date)+' · '+safe(last.store||'구매처 미입력'):'기록 없음'}</p></div></div>
+        <div class="summary"><div class="metric"><small>최근 단위 가격</small><strong>${unitPrice!==null?unitPrice.toFixed(2)+'원/'+p.unit:'-'}</strong></div>
+        <div class="metric"><small>최저 단위 가격</small><strong>${low!==null?low.toFixed(2)+'원/'+p.unit:'-'}</strong></div>
+        <div class="metric"><small>기록 횟수</small><strong>${p.history.length}회</strong></div></div>
+        <div class="product-actions"><button class="primary" data-detail="${p.id}">가격 이력</button><button data-add="${p.id}">가격 추가</button><button class="danger" data-delete="${p.id}">삭제</button></div></article>`;
+    }).join(''):'<div class="panel empty">아직 등록된 상품이 없습니다.<br>상품 등록 버튼으로 첫 상품을 추가해 보세요.</div>';
+    $('products').querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>showDetail(b.dataset.detail));
+    $('products').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addHistory(b.dataset.add));
+    $('products').querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{
+      if(confirm('이 상품과 가격 기록을 모두 삭제할까요?')){await deleteProduct(b.dataset.delete);renderList();}
+    });
+  }
+  async function addHistory(id){
+    const p=(await allProducts()).find(x=>x.id===id);if(!p)return;
+    const store=prompt('구매처를 입력하세요.','');if(store===null)return;
+    const date=prompt('구매 날짜를 입력하세요. (YYYY-MM-DD)',new Date().toISOString().slice(0,10));if(date===null)return;
+    const regular=prompt('정가를 입력하세요. (모르면 0)', '0');if(regular===null)return;
+    const paid=prompt('실제 구매가를 입력하세요. (원)','');if(paid===null||paid.trim()===''||!Number.isFinite(Number(paid))||Number(paid)<0)return alert('구매가를 올바르게 입력해 주세요.');
+    p.history.push({id:crypto.randomUUID(),store:store.trim(),date,regular:Number(regular)||0,paid:Number(paid)});
+    await saveProduct(p);await renderList();
+  }
+  async function showDetail(id){
+    const p=(await allProducts()).find(x=>x.id===id);if(!p)return;currentDetail=id;
+    const sorted=[...p.history].sort((a,b)=>b.date.localeCompare(a.date));
+    const low=best(p);
+    $('detailContent').innerHTML=`<div class="product-head">${p.photo?`<img class="thumb" src="${p.photo}" alt="">`:''}<div><h2>${safe(p.name)}</h2><p class="hint">${p.amount.toLocaleString()}${p.unit}</p></div></div>
+      <div class="summary"><div class="metric"><small>최저 단위 가격</small><strong>${low!==null?low.toFixed(2)+'원/'+p.unit:'-'}</strong></div>
+      <div class="metric"><small>가격 기록</small><strong>${p.history.length}회</strong></div></div>
+      <h3 style="margin:16px 0 6px">구매 가격 이력</h3>
+      ${sorted.length?sorted.map(h=>{const c=calc(p,h);return `<div class="history-row"><div><b>${safe(h.date)}</b><br><span class="hint">${safe(h.store||'구매처 미입력')} · ${c.unitPrice.toFixed(2)}원/${p.unit}</span></div><div style="text-align:right"><b>${won(h.paid)}</b><br><span class="hint">정가 ${won(h.regular)} · 할인 ${c.rate.toFixed(1)}%</span></div></div>`}).join(''):'<p class="empty">아직 가격 기록이 없습니다.</p>'}`;
+    switchView('detail');
+  }
+  $('tabList').onclick=()=>{switchView('list');renderList();};
+  $('tabAdd').onclick=()=>{resetForm();delete $('productForm').dataset.editOnly;switchView('form');};
+  $('cancelForm').onclick=()=>{delete $('productForm').dataset.editOnly;resetForm();switchView('list');};
+  $('backList').onclick=()=>{switchView('list');renderList();};
+  $('filter').oninput=renderList;
+  (async()=>{try{db=await openDB();await renderList();}catch(e){alert('이 브라우저에서 저장소를 열지 못했습니다. 최신 Chrome 또는 Edge를 이용해 주세요.');}})();
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+})();
+</script>
 </body>
 </html>
